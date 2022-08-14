@@ -18,4 +18,7 @@ typedef struct
    Color32 *pixels;
 } Image;
 
+#define INDEX(i, x, y)  (i->width * (y)) + (x)
+#define SETPIXEL(i, x, y, c) (i->pixels[ (i->width * (y)) + (x) ] = (c))
+
 #endif

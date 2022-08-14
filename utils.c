@@ -65,7 +65,7 @@ int save_image_as_png(const char *filepath, int width, int height, void *pixels)
       row_pointers[y] = row;
       for (x = 0; x < width; x++)
       {
-         int ix = y * height + x;
+         int ix = y * width + x;
          uint32_t pixel = p[ix];
 
          *row++ = (pixel & 0x0000FF) >> 0;

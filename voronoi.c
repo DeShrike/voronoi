@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "voronoi.h"
 #include "utils.h"
 
@@ -11,9 +12,31 @@
 #define HEIGHT 600
 #define OUTPUT_FILE_PATH "output.png"
 
-#define INDEX(i, x, y)  (i->height * (y)) + (x)
-
 #define SEED_COUNT 10
+#define SEED_MARKER_RADIUS 5
+#define SEED_MARKER_COLOR COLOR_WHITE
+
+#define BACKGROUND_COLOR 0xFF181818
+
+#define BRIGHT_RED      0xFF3449FB
+#define BRIGHT_GREEN    0xFF26BBB8
+#define BRIGHT_YELLOW   0xFF2FBDFA
+#define BRIGHT_BLUE     0xFF98A583
+#define BRIGHT_PURPLE   0xFF9B86D3
+#define BRIGHT_AQUA     0xFF7CC08E
+#define BRIGHT_ORANGE   0xFF1980FE
+
+static Color32 palette[] = {
+   BRIGHT_RED,
+   BRIGHT_GREEN,
+   BRIGHT_YELLOW,
+   BRIGHT_BLUE,
+   BRIGHT_PURPLE,
+   BRIGHT_AQUA,
+   BRIGHT_ORANGE,
+};
+
+#define palette_count (sizeof(palette) / sizeof(palette[0]))
 
 typedef struct
 {
@@ -50,17 +73,35 @@ void fill_color(Image* image, Color32 color)
    }
 }
 
-void fill_circle(Image* image, int x, int y, int radius, Color32 color)
+int sqr_dist(int x1, int y1, int x2, int y2)
 {
-
-   // UNIMPLEMENTED("Fill circle");
+   int dx = x1 - x2;
+   int dy = y1 - y2;
+   return dx * dx + dy * dy;
 }
 
-void show_seeds(Image* image)
+void fill_circle(Image* image, int cx, int cy, int radius, Color32 color)
 {
-   for (int s = 0; s < SEED_COUNT; s++)
+   int x0 = cx - radius;
+   int y0 = cy - radius;
+   int x1 = cx + radius;
+   int y1 = cy + radius;
+
+   for (int x = x0; x <= x1; ++x)
    {
-      fill_circle(image, seeds[s].x, seeds[s].y, 2, COLOR_BLACK);
+      if (0 <= x && x < WIDTH)
+      {
+         for (int y = y0; y <= y1; ++y)
+         {
+            if (0 <= y && y < HEIGHT)
+            {
+               if (sqr_dist(cx, cy, x, y) <= radius * radius)
+               {
+                  SETPIXEL(image, x, y, color);
+               }
+            }
+         }
+      }
    }
 }
 
@@ -73,13 +114,47 @@ void generate_random_seeds(void)
    }
 }
 
+void render_seed_markers(Image* image)
+{
+   for (int s = 0; s < SEED_COUNT; s++)
+   {
+      fill_circle(image, seeds[s].x, seeds[s].y, SEED_MARKER_RADIUS, SEED_MARKER_COLOR);
+   }
+}
+
+void render_voronoi(Image* image)
+{
+   for (int y = 0; y < image->height; ++y)
+   {
+      for (int x = 0; x < image->width; ++x)
+      {
+         int best_dist = 1000000;
+         int best_seed = -1;
+         for (size_t i = 0; i < SEED_COUNT; ++i)
+         {
+            int dist = sqr_dist(seeds[i].x, seeds[i].y, x, y);
+            if (dist < best_dist)
+            {
+               best_dist = dist;
+               best_seed = i;
+            }
+         }
+
+         SETPIXEL(image, x, y, palette[best_seed % palette_count]);
+      }
+   }
+}
+
 int main(void)
 {
+   // srand(time(0));
    Image *image = alloc_image(WIDTH, HEIGHT);
 
-   fill_color(image, COLOR_BLUE);
+   fill_color(image, BACKGROUND_COLOR);
    generate_random_seeds();
-   show_seeds(image);
+
+   render_voronoi(image);
+   render_seed_markers(image);
 
    printf("Saving %s\n", OUTPUT_FILE_PATH);
    int ret = save_image_as_png(OUTPUT_FILE_PATH, image->width, image->height, image->pixels);
