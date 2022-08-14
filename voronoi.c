@@ -4,83 +4,90 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <png.h>
+#include "voronoi.h"
+#include "utils.h"
 
 #define WIDTH 800
 #define HEIGHT 600
-
 #define OUTPUT_FILE_PATH "output.png"
 
-// 0xAABBGGRR
-#define COLOR_RED 0xFF0000FF
+#define INDEX(i, x, y)  (i->height * (y)) + (x)
 
-typedef uint32_t Color32;
+#define SEED_COUNT 10
 
-static Color32 image[HEIGHT][WIDTH];
-
-void fill_color(Color32 color)
+typedef struct
 {
-   for (size_t y = 0; y < HEIGHT; ++y)
+   int x, y;
+} Point;
+
+static Point seeds[SEED_COUNT];
+
+Image* alloc_image(int width, int height)
+{
+   Image *i = (Image*)malloc(sizeof(Image));
+   i->pixels = (Color32*)malloc(sizeof(Color32) * width * height);
+   i->width = width;
+   i->height = height;
+   return i;
+}
+
+void free_image(Image* image)
+{
+   free(image->pixels);
+   free(image);
+}
+
+void fill_color(Image* image, Color32 color)
+{
+   for (size_t y = 0; y < image->height; ++y)
    {
-      for (size_t x = 0; x < WIDTH; ++x)
+      for (size_t x = 0; x < image->width; ++x)
       {
-         image[y][x] = color;
+         // int ix = y * image->height + x;
+         int ix = INDEX(image, x, y);
+         image->pixels[ix] = color;
       }
    }
 }
 
-void save_image_as_png(const char *filepath)
+void fill_circle(Image* image, int x, int y, int radius, Color32 color)
 {
-   printf("Saving %s\n", filepath);
-   FILE *f = fopen(filepath, "wb");
-   if (f == NULL)
+
+   // UNIMPLEMENTED("Fill circle");
+}
+
+void show_seeds(Image* image)
+{
+   for (int s = 0; s < SEED_COUNT; s++)
    {
-      fprintf(stderr, "ERROR: could not open file %s: %s\n", filepath, strerror(errno));
-      exit(1);
+      fill_circle(image, seeds[s].x, seeds[s].y, 2, COLOR_BLACK);
    }
+}
 
-   png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-
-   png_infop info = png_create_info_struct(png);
-   if (!info)
+void generate_random_seeds(void)
+{
+   for (size_t i = 0; i < SEED_COUNT; ++i)
    {
-      fprintf(stderr, "ERROR: png_create_info_struct failed: %s\n", strerror(errno));
-      exit(2);
+      seeds[i].x = rand() % WIDTH;
+      seeds[i].y = rand() % HEIGHT;
    }
-
-   if (setjmp(png_jmpbuf(png)))
-   {
-      fprintf(stderr, "ERROR: setjmp(png_jmpbif)) failed: %s\n", strerror(errno));
-      exit(3);
-   }
-
-   png_init_io(png, f);
-
-   // Output is 8bit depth, RGBA format.
-   png_set_IHDR(
-      png,
-      info,
-      WIDTH, HEIGHT,
-      8,
-      PNG_COLOR_TYPE_RGBA,
-      PNG_INTERLACE_NONE,
-      PNG_COMPRESSION_TYPE_DEFAULT,
-      PNG_FILTER_TYPE_DEFAULT
-   );
-   png_write_info(png, info);
-
-   png_write_image(png, image);
-   png_write_end(png, NULL);
-
-   int ret = fclose(f);
-   assert(ret == 0);
-
-   png_destroy_write_struct(&png, &info);
 }
 
 int main(void)
 {
-   fill_color(COLOR_RED);
-   save_image_as_png(OUTPUT_FILE_PATH);
+   Image *image = alloc_image(WIDTH, HEIGHT);
+
+   fill_color(image, COLOR_BLUE);
+   generate_random_seeds();
+   show_seeds(image);
+
+   printf("Saving %s\n", OUTPUT_FILE_PATH);
+   int ret = save_image_as_png(OUTPUT_FILE_PATH, image->width, image->height, image->pixels);
+   if (ret)
+   {
+      fprintf(stderr, "Saving image as PNG failed (%s)\n", ret);
+   }
+
+   free_image(image);
    return 0;
 }
