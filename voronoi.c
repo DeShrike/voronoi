@@ -9,9 +9,10 @@
 #include "utils.h"
 
 // Select one: //////////////////////
-#define EUCLIDIAN
+#define EUCLIDEAN
 // #define MANHATTAN
 // #define CHEBYSHEV
+// #define MINKOWSKI
 /////////////////////////////////////
 
 #define WIDTH 800
@@ -20,12 +21,16 @@
 // #define WIDTH 640
 // #define HEIGHT 480
 
-#ifdef EUCLIDIAN
-#define OUTPUT_FILE_PATH "output/voronoi_euclidian.png"
+#ifdef EUCLIDEAN
+#define OUTPUT_FILE_PATH "output/voronoi_euclidean.png"
 #endif
 
 #ifdef CHEBYSHEV
 #define OUTPUT_FILE_PATH "output/voronoi_chebyshev.png"
+#endif
+
+#ifdef MINKOWSKI
+#define OUTPUT_FILE_PATH "output/voronoi_minkowski.png"
 #endif
 
 #ifdef MANHATTAN
@@ -146,9 +151,19 @@ int max(int a, int b)
    return a > b ? a : b;
 }
 
+int min(int a, int b)
+{
+   return a < b ? a : b;
+}
+
 int chebyshev_dist(int x1, int y1, int x2, int y2)
 {
    return max(abs(x1 - x2), abs(y1 - y2));
+}
+
+int minkowski_dist(int x1, int y1, int x2, int y2)
+{
+   return min(abs(x1 - x2), abs(y1 - y2));
 }
 
 void fill_circle(Image* image, int cx, int cy, int radius, Color32 color)
@@ -242,7 +257,7 @@ void render_voronoi(Image* image)
          int best_seed = -1;
          for (size_t i = 0; i < SEED_COUNT; ++i)
          {
-#ifdef EUCLIDIAN
+#ifdef EUCLIDEAN
             int dist = sqr_dist(seeds[i].x, seeds[i].y, x, y);
 #endif
 #ifdef MANHATTAN
@@ -250,6 +265,9 @@ void render_voronoi(Image* image)
 #endif
 #ifdef CHEBYSHEV
             int dist = chebyshev_dist(seeds[i].x, seeds[i].y, x, y);
+#endif
+#ifdef MINKOWSKI
+            int dist = minkowski_dist(seeds[i].x, seeds[i].y, x, y);
 #endif
             if (dist < best_dist)
             {

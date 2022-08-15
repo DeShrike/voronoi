@@ -1,8 +1,8 @@
 # Experimenting with Voronoi Diagrams in C
 
-## Using Euclidian distance
+## Using Euclidean distance
 
-![Euclidian](samples/voronoi_euclidian.png "Using Euclidian distance")
+![Eucledian](samples/voronoi_euclidean.png "Using Euclidean distance")
 
 ## Using Manhattan distance
 
@@ -11,6 +11,10 @@
 ## Using Chebyshev distance
 
 ![Chebyshev](samples/voronoi_chebyshev.png "Using Chebyshev distance")
+
+## Using Minkowski distance
+
+![Minkowski](samples/voronoi_minkowski.png "Using Minkowsku distance")
 
 See also the MP4 videos in the samples folder.
 
