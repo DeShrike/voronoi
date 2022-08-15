@@ -1,4 +1,5 @@
 *.o
 voronoi
 *.png
+!samples/*.png
 

@@ -8,14 +8,16 @@
 #include "voronoi.h"
 #include "utils.h"
 
-#define WIDTH 800
-#define HEIGHT 600
+//#define WIDTH 800
+//#define HEIGHT 600
+#define WIDTH 640
+#define HEIGHT 480
 #define OUTPUT_FILE_PATH "output.png"
 
-#define FRAME_COUNT    9999
+#define FRAME_COUNT      10000
 #define OUTPUT_FILE_MASK "output/output%04d.png"
 
-#define SEED_COUNT 20
+#define SEED_COUNT 21
 #define SEED_MARKER_RADIUS 5
 #define SEED_MARKER_COLOR COLOR_BLACK
 
@@ -228,7 +230,8 @@ void render_voronoi(Image* image)
 
 int main(void)
 {
-   srand(time(0));
+   // srand(time(0));
+   srand(2);
    Image *image = alloc_image(WIDTH, HEIGHT);
 
    fill_color(image, BACKGROUND_COLOR);
