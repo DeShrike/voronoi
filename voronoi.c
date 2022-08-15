@@ -8,10 +8,17 @@
 #include "voronoi.h"
 #include "utils.h"
 
-//#define WIDTH 800
-//#define HEIGHT 600
-#define WIDTH 640
-#define HEIGHT 480
+// Select one: //////////////////////
+#define EUCLIDIAN
+// #define MANHATTAN
+/////////////////////////////////////
+
+#define WIDTH 800
+#define HEIGHT 600
+
+//#define WIDTH 640
+//#define HEIGHT 480
+
 #define OUTPUT_FILE_PATH "output.png"
 
 #define FRAME_COUNT      10000
@@ -214,8 +221,12 @@ void render_voronoi(Image* image)
          int best_seed = -1;
          for (size_t i = 0; i < SEED_COUNT; ++i)
          {
-            // int dist = sqr_dist(seeds[i].x, seeds[i].y, x, y);
+#ifdef EUCLIDIAN
+            int dist = sqr_dist(seeds[i].x, seeds[i].y, x, y);
+#endif
+#ifdef MANHATTAN
             int dist = manhattan_dist(seeds[i].x, seeds[i].y, x, y);
+#endif
             if (dist < best_dist)
             {
                best_dist = dist;
