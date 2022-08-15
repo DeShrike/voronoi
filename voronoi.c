@@ -11,15 +11,26 @@
 // Select one: //////////////////////
 #define EUCLIDIAN
 // #define MANHATTAN
+// #define CHEBYSHEV
 /////////////////////////////////////
 
 #define WIDTH 800
 #define HEIGHT 600
 
-//#define WIDTH 640
-//#define HEIGHT 480
+// #define WIDTH 640
+// #define HEIGHT 480
 
-#define OUTPUT_FILE_PATH "output.png"
+#ifdef EUCLIDIAN
+#define OUTPUT_FILE_PATH "output/voronoi_euclidian.png"
+#endif
+
+#ifdef CHEBYSHEV
+#define OUTPUT_FILE_PATH "output/voronoi_chebyshev.png"
+#endif
+
+#ifdef MANHATTAN
+#define OUTPUT_FILE_PATH "output/voronoi_manhattan.png"
+#endif
 
 #define FRAME_COUNT      10000
 #define OUTPUT_FILE_MASK "output/output%04d.png"
@@ -130,6 +141,16 @@ int manhattan_dist(int x1, int y1, int x2, int y2)
    return abs(x1 - x2) + abs(y1 - y2);
 }
 
+int max(int a, int b)
+{
+   return a > b ? a : b;
+}
+
+int chebyshev_dist(int x1, int y1, int x2, int y2)
+{
+   return max(abs(x1 - x2), abs(y1 - y2));
+}
+
 void fill_circle(Image* image, int cx, int cy, int radius, Color32 color)
 {
    int x0 = cx - radius;
@@ -227,6 +248,9 @@ void render_voronoi(Image* image)
 #ifdef MANHATTAN
             int dist = manhattan_dist(seeds[i].x, seeds[i].y, x, y);
 #endif
+#ifdef CHEBYSHEV
+            int dist = chebyshev_dist(seeds[i].x, seeds[i].y, x, y);
+#endif
             if (dist < best_dist)
             {
                best_dist = dist;
@@ -241,8 +265,8 @@ void render_voronoi(Image* image)
 
 int main(void)
 {
-   // srand(time(0));
-   srand(2);
+   srand(time(0));
+   // srand(2);
    Image *image = alloc_image(WIDTH, HEIGHT);
 
    fill_color(image, BACKGROUND_COLOR);
