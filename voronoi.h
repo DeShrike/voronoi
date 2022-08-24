@@ -9,16 +9,4 @@
 #define COLOR_WHITE  0xFFFFFFFF
 #define COLOR_BLACK  0xFF000000
 
-typedef uint32_t Color32;
-
-typedef struct
-{
-   int width;
-   int height;
-   Color32 *pixels;
-} Image;
-
-#define INDEX(i, x, y)  (i->width * (y)) + (x)
-#define SETPIXEL(i, x, y, c) (i->pixels[ (i->width * (y)) + (x) ] = (c))
-
 #endif

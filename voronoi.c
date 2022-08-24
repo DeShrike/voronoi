@@ -7,6 +7,8 @@
 #include <time.h>
 #include "voronoi.h"
 #include "utils.h"
+#include "perlin.h"
+#include "pngimage.h"
 
 // Select one: //////////////////////
 #define EUCLIDEAN
@@ -41,7 +43,7 @@
 #define OUTPUT_FILE_MASK "output/output%04d.png"
 
 #define SEED_COUNT 21
-#define SEED_MARKER_RADIUS 5
+#define SEED_MARKER_RADIUS 3
 #define SEED_MARKER_COLOR COLOR_BLACK
 
 #define BACKGROUND_COLOR 0xFF181818
@@ -98,6 +100,8 @@ static Color32 palette[] = {
 
 #define palette_count (sizeof(palette) / sizeof(palette[0]))
 
+int seeds_to_use = SEED_COUNT;
+
 typedef struct
 {
    int x, y;
@@ -105,91 +109,6 @@ typedef struct
 } Point;
 
 static Point seeds[SEED_COUNT];
-
-Image* alloc_image(int width, int height)
-{
-   Image *i = (Image*)malloc(sizeof(Image));
-   i->pixels = (Color32*)malloc(sizeof(Color32) * width * height);
-   i->width = width;
-   i->height = height;
-   return i;
-}
-
-void free_image(Image* image)
-{
-   free(image->pixels);
-   free(image);
-}
-
-void fill_color(Image* image, Color32 color)
-{
-   for (size_t y = 0; y < image->height; ++y)
-   {
-      for (size_t x = 0; x < image->width; ++x)
-      {
-         // int ix = y * image->height + x;
-         int ix = INDEX(image, x, y);
-         image->pixels[ix] = color;
-      }
-   }
-}
-
-int sqr_dist(int x1, int y1, int x2, int y2)
-{
-   int dx = x1 - x2;
-   int dy = y1 - y2;
-   return dx * dx + dy * dy;
-}
-
-int manhattan_dist(int x1, int y1, int x2, int y2)
-{
-   return abs(x1 - x2) + abs(y1 - y2);
-}
-
-int max(int a, int b)
-{
-   return a > b ? a : b;
-}
-
-int min(int a, int b)
-{
-   return a < b ? a : b;
-}
-
-int chebyshev_dist(int x1, int y1, int x2, int y2)
-{
-   return max(abs(x1 - x2), abs(y1 - y2));
-}
-
-int minkowski_dist(int x1, int y1, int x2, int y2)
-{
-   return min(abs(x1 - x2), abs(y1 - y2));
-}
-
-void fill_circle(Image* image, int cx, int cy, int radius, Color32 color)
-{
-   int x0 = cx - radius;
-   int y0 = cy - radius;
-   int x1 = cx + radius;
-   int y1 = cy + radius;
-
-   for (int x = x0; x <= x1; ++x)
-   {
-      if (0 <= x && x < WIDTH)
-      {
-         for (int y = y0; y <= y1; ++y)
-         {
-            if (0 <= y && y < HEIGHT)
-            {
-               if (sqr_dist(cx, cy, x, y) <= radius * radius)
-               {
-                  SETPIXEL(image, x, y, color);
-               }
-            }
-         }
-      }
-   }
-}
 
 void update_seeds(void)
 {
@@ -241,7 +160,7 @@ void generate_random_seeds(void)
 
 void render_seed_markers(Image* image)
 {
-   for (int s = 0; s < SEED_COUNT; s++)
+   for (int s = 0; s < seeds_to_use; s++)
    {
       fill_circle(image, seeds[s].x, seeds[s].y, SEED_MARKER_RADIUS, SEED_MARKER_COLOR);
    }
@@ -255,7 +174,7 @@ void render_voronoi(Image* image)
       {
          int best_dist = 1000000;
          int best_seed = -1;
-         for (size_t i = 0; i < SEED_COUNT; ++i)
+         for (size_t i = 0; i < seeds_to_use; ++i)
          {
 #ifdef EUCLIDEAN
             int dist = sqr_dist(seeds[i].x, seeds[i].y, x, y);
@@ -269,7 +188,8 @@ void render_voronoi(Image* image)
 #ifdef MINKOWSKI
             int dist = minkowski_dist(seeds[i].x, seeds[i].y, x, y);
 #endif
-            if (dist < best_dist)
+			double noise = Perlin_Get2d(x, y, 0.1, 1) * 1000.0;
+            if ((double)dist < (double)best_dist + noise)
             {
                best_dist = dist;
                best_seed = i;
@@ -281,7 +201,7 @@ void render_voronoi(Image* image)
    }
 }
 
-int main(void)
+int main1(void)
 {
    srand(time(0));
    // srand(2);
@@ -304,12 +224,14 @@ int main(void)
    return 0;
 }
 
-int mainX(void)
+int main(void)
 {
    srand(time(0));
    Image *image = alloc_image(WIDTH, HEIGHT);
 
    generate_random_seeds();
+
+   seeds_to_use = 10;
 
    for (int frame = 0; frame < FRAME_COUNT; ++frame)
    {
@@ -327,6 +249,15 @@ int mainX(void)
       {
          fprintf(stderr, "Saving image as PNG failed (%s)\n", ret);
       }
+
+		if (frame % 20 == 0)
+		{
+			if (seeds_to_use < SEED_COUNT)
+			{
+				seeds_to_use++;
+				printf("Seeds: %d\n", seeds_to_use);
+			}
+		}
    }
 
    free_image(image);
