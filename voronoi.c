@@ -39,7 +39,7 @@
 #define OUTPUT_FILE_PATH "output/voronoi_manhattan.png"
 #endif
 
-#define FRAME_COUNT      10000
+#define FRAME_COUNT      1000
 #define OUTPUT_FILE_MASK "output/output%04d.png"
 
 #define SEED_COUNT 21
@@ -188,8 +188,9 @@ void render_voronoi(Image* image)
 #ifdef MINKOWSKI
             int dist = minkowski_dist(seeds[i].x, seeds[i].y, x, y);
 #endif
-			double noise = Perlin_Get2d(x, y, 0.1, 1) * 1000.0;
-            if ((double)dist < (double)best_dist + noise)
+			double noise = Perlin_Get2d(x, y, 0.01, 1); // * 1000.0;
+            if ((double)dist * noise < (double)best_dist)
+            // if ((double)dist < (double)best_dist + noise)
             {
                best_dist = dist;
                best_seed = i;
@@ -199,6 +200,44 @@ void render_voronoi(Image* image)
          SETPIXEL(image, x, y, palette[best_seed % palette_count]);
       }
    }
+}
+
+int mainN(void)
+{
+   Image *image = alloc_image(WIDTH, HEIGHT);
+
+	for (int y = 0; y < image->height; ++y)	
+	{
+    	for (int x = 0; x < image->width; ++x)
+     	{
+   	  		double nr = Perlin_Get2d(x, y, 0.01, 2);
+			nr *= 255.0;
+			int r = (int)nr;
+			r = clamp(r, 0, 255);
+
+   	  		double ng = Perlin_Get2d(x + 1000, y, 0.01, 2);
+			ng *= 255.0;
+			int g = (int)ng;
+			g = clamp(g, 0, 255);
+
+   	  		double nb = Perlin_Get2d(x, y + 1000, 0.01, 2);
+			nb *= 255.0;
+			int b = (int)nb;
+			b = clamp(b, 0, 255);
+
+			SETPIXEL(image, x, y, RGB(r, g, b));
+        }
+    }
+
+   printf("Saving %s\n", OUTPUT_FILE_PATH);
+   int ret = save_image_as_png(OUTPUT_FILE_PATH, image->width, image->height, image->pixels);
+   if (ret)
+   {
+      fprintf(stderr, "Saving image as PNG failed (%s)\n", ret);
+   }
+
+   free_image(image);
+   return 0;
 }
 
 int main1(void)
@@ -231,7 +270,7 @@ int main(void)
 
    generate_random_seeds();
 
-   seeds_to_use = 10;
+   // seeds_to_use = 10;
 
    for (int frame = 0; frame < FRAME_COUNT; ++frame)
    {

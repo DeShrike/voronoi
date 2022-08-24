@@ -12,6 +12,8 @@ typedef struct
 #define INDEX(i, x, y)  (i->width * (y)) + (x)
 #define SETPIXEL(i, x, y, c) (i->pixels[ (i->width * (y)) + (x) ] = (c))
 
+#define RGB(r, g, b) (((0xFF000000 | r) | ((g) << 8)) | ((b) << 16))
+
 Image* alloc_image(int width, int height);
 void free_image(Image* image);
 int save_image_as_png(const char *filepath, int width, int height, void *pixels);

@@ -32,3 +32,8 @@ int minkowski_dist(int x1, int y1, int x2, int y2)
 {
    return min(abs(x1 - x2), abs(y1 - y2));
 }
+
+int clamp(int value, int minimum, int maximum)
+{
+	return min(max(value, minimum), maximum);
+}
