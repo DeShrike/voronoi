@@ -7,6 +7,21 @@
 #include <png.h>
 #include "pngimage.h"
 
+float blend(float a, float b, float i)
+{
+	return (b * i) + (1.0 - i) * a;
+}
+
+float clampf(float value, float minimum, float maximum)
+{
+	return value < minimum ? minimum : (value > maximum ? maximum : value);
+}
+
+int clampi(int value, int minimum, int maximum)
+{
+	return value < minimum ? minimum : (value > maximum ? maximum : value);
+}
+
 Image* alloc_image(int width, int height)
 {
    Image *i = (Image*)malloc(sizeof(Image));
@@ -22,7 +37,7 @@ void free_image(Image* image)
    free(image);
 }
 
-int save_image_as_png(const char *filepath, int width, int height, void *pixels)
+int save_image_as_png(const char* filepath, int width, int height, void *pixels)
 {
    png_byte **row_pointers = NULL;
    png_structp png = NULL;
@@ -142,4 +157,59 @@ void fill_color(Image* image, Color32 color)
          image->pixels[ix] = color;
       }
    }
+}
+
+Color32* generate_palette(const Keyframe* keyframes, const int keyframe_count, int* palette_size)
+{
+	assert(keyframes[0].pos == 0);
+
+	*palette_size = keyframes[keyframe_count - 1].pos + 1;
+	Color32 *p = (Color32*)malloc(*palette_size * sizeof(Color32));
+
+	printf("Keyframe Count: %d\n", keyframe_count);
+	printf("Palette Size: %d\n", *palette_size);
+
+    int first_kf = 0, current_kf = 0;
+	int dest_ix = 0;
+    Color32 current_color = RGB(0, 0, 0);
+    Color32 first_color = RGB(0, 0, 0);
+    float progress;
+
+	for (int k = 0; k < keyframe_count; ++k)
+	{
+		int dest_kf = keyframes[k].pos;
+		int kf_size = dest_kf - current_kf;
+
+		Color32 dest_color = keyframes[k].value;
+		printf("%d: %d\t0x%X \n", k, dest_kf, dest_color);
+		first_color = current_color;
+		first_kf = current_kf;
+		while (current_kf < dest_kf)
+		{
+			progress = ((float)current_kf - (float)first_kf) / (float)kf_size;
+			int rrr = blend(RR(first_color), RR(dest_color), progress);
+			int ggg = blend(GG(first_color), GG(dest_color), progress);
+			int bbb = blend(BB(first_color), BB(dest_color), progress);
+
+			current_color = RGB(rrr, ggg, bbb);
+			p[dest_ix++] = current_color;
+			printf("-> %f  0x%X\n", progress, current_color);
+
+			current_kf++;
+		}
+
+		current_color = dest_color;
+
+		progress = ((float)current_kf - (float)first_kf) / (float)kf_size;
+		p[dest_ix] = current_color;
+		printf("-> %f  0x%X\n", progress, current_color);
+
+	}
+
+	return p;
+}
+
+void free_palette(Color32* palette)
+{
+	free(palette);
 }
