@@ -17,11 +17,14 @@
 // #define MINKOWSKI
 /////////////////////////////////////
 
-#define WIDTH 2560
-#define HEIGHT 1440
+// #define WIDTH 1920
+// #define HEIGHT 1080
 
-// #define WIDTH 800
-// #define HEIGHT 600
+// #define WIDTH 2560
+// #define HEIGHT 1440
+
+#define WIDTH 800
+#define HEIGHT 600
 
 // #define WIDTH 640
 // #define HEIGHT 480
@@ -42,14 +45,14 @@
 #define OUTPUT_FILE_PATH "output/voronoi_manhattan.png"
 #endif
 
-#define FRAME_COUNT      1000
+#define FRAME_COUNT      500
 #define OUTPUT_FILE_MASK "output/output%04d.png"
 
-#define SEED_COUNT 200
+#define SEED_COUNT         100
 #define SEED_MARKER_RADIUS 3
-#define SEED_MARKER_COLOR COLOR_BLACK
+#define SEED_MARKER_COLOR  COLOR_BLACK
 
-#define BACKGROUND_COLOR 0xFF181818
+#define BACKGROUND_COLOR   0xFF181818
 
 Color32* palette = NULL;
 int palette_size = 0;
@@ -144,7 +147,7 @@ void render_voronoi(Image* image)
 #ifdef MINKOWSKI
             int dist = minkowski_dist(seeds[i].x, seeds[i].y, x, y);
 #endif
-			double noise = 1.0; // Perlin_Get2d(x, y, 0.01, 1); // * 1000.0;
+   			double noise = 1.0; // Perlin_Get2d(x, y, 0.01, 1); // * 1000.0;
             if ((double)dist * noise < (double)best_dist)
             // if ((double)dist < (double)best_dist + noise)
             {
@@ -158,7 +161,7 @@ void render_voronoi(Image* image)
    }
 }
 
-int main(void)
+int main_perlin(void)
 {
 	/*
 	Keyframe kfs[] = {
@@ -181,7 +184,7 @@ int main(void)
 		{ WIDTH / 8 * 6, COLOR_BLUE },
 		{ WIDTH / 8 * 7, COLOR_BLACK },
 		{ WIDTH, COLOR_BLACK }
-    };
+   };
 
 	palette = generate_palette(kfs, sizeof(kfs) / sizeof(kfs[0]), &palette_size);
 
@@ -192,17 +195,17 @@ int main(void)
     	for (int x = 0; x < image->width; ++x)
      	{
 			/*
-   	  		double nr = Perlin_Get2d(x, y, 0.01, 2);
+   	  	double nr = Perlin_Get2d(x, y, 0.01, 2);
 			nr *= 255.0;
 			int r = (int)nr;
 			r = clamp(r, 0, 255);
 
-   	  		double ng = Perlin_Get2d(x + 1000, y, 0.01, 2);
+   	  	double ng = Perlin_Get2d(x + 1000, y, 0.01, 2);
 			ng *= 255.0;
 			int g = (int)ng;
 			g = clamp(g, 0, 255);
 
-   	  		double nb = Perlin_Get2d(x, y + 1000, 0.01, 2);
+   	  	double nb = Perlin_Get2d(x, y + 1000, 0.01, 2);
 			nb *= 255.0;
 			int b = (int)nb;
 			b = clamp(b, 0, 255);
@@ -210,11 +213,11 @@ int main(void)
 			SETPIXEL(image, x, y, RGB(r, g, b));
 			*/
 
-   	  		double n = Perlin_Get2d(x, y + 1000, 0.01, 2);
+   	  	double n = Perlin_Get2d(x, y + 1000, 0.01, 2);
 			int ix = (int)blend(0,  palette_size, n);
 			SETPIXEL(image, x, y, palette[ix]);
-        }
-    }
+      }
+   }
 
    printf("Saving %s\n", OUTPUT_FILE_PATH);
    int ret = save_image_as_png(OUTPUT_FILE_PATH, image->width, image->height, image->pixels);
@@ -223,33 +226,32 @@ int main(void)
       fprintf(stderr, "Saving image as PNG failed (%s)\n", ret);
    }
 
+   free_image(image);
+   image = NULL;
 
-   	free_image(image);
-	image = NULL;
+   free_palette(palette);
+   palette = NULL;
 
-   	free_palette(palette);
-   	palette = NULL;
-
-   	return 0;
+   return 0;
 }
 
-int mainR(void)
+int main_pal(void)
 {
-   	Image *image = alloc_image(WIDTH, HEIGHT);
+   Image *image = alloc_image(WIDTH, HEIGHT);
 
-   	fill_color(image, BACKGROUND_COLOR);
+   fill_color(image, BACKGROUND_COLOR);
 
-	Keyframe kfs[] = {
-		{ 0, COLOR_BLACK },
-		{ WIDTH / 8 * 1, BRIGHT_YELLOW1 },
-		{ WIDTH / 8 * 2, BRIGHT_BLUE1 },
-		{ WIDTH / 8 * 3, BRIGHT_RED1 },
-		{ WIDTH / 8 * 4, BRIGHT_GREEN1 },
-		{ WIDTH / 8 * 5, BRIGHT_PURPLE1 },
-		{ WIDTH / 8 * 6, BRIGHT_AQUA1 },
-		{ WIDTH / 8 * 7, BRIGHT_ORANGE1 },
-		{ WIDTH, COLOR_BLACK }
-	};
+   Keyframe kfs[] = {
+      { 0, COLOR_BLACK },
+      { WIDTH / 8 * 1, BRIGHT_YELLOW1 },
+      { WIDTH / 8 * 2, BRIGHT_BLUE1 },
+      { WIDTH / 8 * 3, BRIGHT_RED1 },
+      { WIDTH / 8 * 4, BRIGHT_GREEN1 },
+      { WIDTH / 8 * 5, BRIGHT_PURPLE1 },
+      { WIDTH / 8 * 6, BRIGHT_AQUA1 },
+      { WIDTH / 8 * 7, BRIGHT_ORANGE1 },
+      { WIDTH, COLOR_BLACK }
+   };
 	/*
 	Keyframe kfs[] = {
 		{ 0, COLOR_BLACK },
@@ -289,10 +291,9 @@ int mainR(void)
 	return 0;
 }
 
-int mainV(void)
+int main_voronoi(void)
 {
    srand(time(0));
-   // srand(2);
    Image *image = alloc_image(WIDTH, HEIGHT);
 
    fill_color(image, BACKGROUND_COLOR);
@@ -330,12 +331,25 @@ int mainV(void)
    return 0;
 }
 
-int mainX(void)
+int main_video(void)
 {
    srand(time(0));
    Image *image = alloc_image(WIDTH, HEIGHT);
 
    generate_random_seeds();
+
+   Keyframe kfs[] = {
+		{ 0, COLOR_RED },
+		{ 10, COLOR_YELLOW },
+		{ 20, COLOR_CYAN },
+		{ 30, COLOR_GREEN },
+		{ 40, COLOR_MAGENTA },
+		{ 50, COLOR_BLUE },
+		{ 60, COLOR_ORANGE },
+		{ 70, COLOR_BLACK }
+   };
+
+   palette = generate_palette(kfs, sizeof(kfs) / sizeof(kfs[0]), &palette_size);
 
    // seeds_to_use = 10;
 
@@ -376,3 +390,10 @@ ffmpeg.exe -framerate 30 -i output/output%04d.png -s:v 800x600
 -profile:v high -crf 20 -pix_fmt yuv420p voronoi.mp4
 */
 
+int main()
+{
+   //return main_perlin();
+   //return main_pal();
+   return main_voronoi();
+   //return main_video();
+}
